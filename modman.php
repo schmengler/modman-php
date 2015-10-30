@@ -620,12 +620,18 @@ class Modman_Command_Deploy {
 			}
 		}
 
+		$sBaseDir = getcwd();
+		$sBaseDirFile = Modman_Command_Init::getBaseDirFile();
+		if (file_exists($sBaseDirFile)) {
+			$sBaseDir = rtrim(array_shift(file($sBaseDirFile, FILE_IGNORE_NEW_LINES)));
+		}
+
 		foreach ($this->oReader->getShells() as $sShell) {
 			if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
 				$sShell = str_replace('rm -rf', 'deltree', $sShell);
 			}
 			$sShell = str_replace('$MODULE', $sTarget, $sShell);
-			$sShell = str_replace('$PROJECT', getcwd(), $sShell);
+			$sShell = str_replace('$PROJECT', $sBaseDir, $sShell);
 			system($sShell);
 		}
 	}
@@ -682,7 +688,12 @@ class Modman_Command_Clean {
 	 */
 	public function doClean() {
 		$oResourceRemover = new Modman_Resource_Remover();
-		foreach ($this->getDeadSymlinks() as $sSymlink) {
+		$sBaseDir = null;
+		$sBaseDirFile = Modman_Command_Init::getBaseDirFile();
+		if (file_exists($sBaseDirFile)) {
+			$sBaseDir = rtrim(array_shift(file($sBaseDirFile, FILE_IGNORE_NEW_LINES)));
+		}
+		foreach ($this->getDeadSymlinks($sBaseDir) as $sSymlink) {
 			echo 'Remove ' . $sSymlink . '.' . PHP_EOL;
 			$oResourceRemover->doRemoveResource($sSymlink);
 		}
